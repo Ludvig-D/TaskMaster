@@ -19,6 +19,27 @@ app.get('/login', (req, res) => {
   res.send('login');
 });
 
+app.post('/login', async (req, res) => {
+  try {
+    const { email: loginEmail, password: loginPassword } = req.body;
+
+    const user = await User.findOne({ email: loginEmail });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const validPassword = await bcrypt.compare(loginPassword, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    res.json({ message: 'Successful login' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.get('/signup', async (req, res) => {
   const users = User.find();
   console.log(users);
@@ -42,10 +63,9 @@ app.post('/signup', async (req, res) => {
     });
 
     await newUser.save();
-
     res.status(201).send('User registered successfully');
   } catch (err) {
-    res.status(500).send('asda', err);
+    res.status(500).send(err);
   }
 });
 
